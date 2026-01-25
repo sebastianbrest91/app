@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "768574279244",
+    "project_id": "personalizadosur2026",
+    "storage_bucket": "personalizadosur2026.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768574279244:android:6c45c493fc6eb56a24aee9",
+        "android_client_info": {
+          "package_name": "estudiofem.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "768574279244-t1q3t4duls597farghhdh6dtav7vug2o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLweuDaCjzOl4fm2EaECdSYN8A5nEEDqU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "768574279244-t1q3t4duls597farghhdh6dtav7vug2o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
