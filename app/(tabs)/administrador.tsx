@@ -1,100 +1,76 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
   StyleSheet,
   Text,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { AppButton } from '../../components/AppButton';
-import { CrearTurnosForm } from '../../components/CrearTurnosForm';
-import { useTurnos, type Tratamiento } from '../../src/context/contexturnos';
+import { useRouter } from "expo-router";
+
+import { AppButton } from "../../components/AppButton";
+import { CrearTurnosForm } from "../../components/CrearTurnosForm";
 
 import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  setDoc,
-} from 'firebase/firestore';
-import { db } from '../../src/firebaseConfig';
+  useTurnos,
+  type Tratamiento,
+} from "../../src/context/contexturnos";
 
-type UsuarioPendiente = {
-  uid: string;
-  personal: {
-    name: string;
-    lastName: string;
-    dni: string;
-    birthDate: string;
-  };
-  account: {
-    username: string;
-    email: string;
-  };
-  profile: {
-    objective: string;
-    role: 'user' | 'admin';
-    approved: boolean;
-  };
-};
+import { useUsers } from "../../src/context/usersContext";
 
 export default function Administrador() {
+  const router = useRouter();
+
+  const { usuarioLogueado } = useUsers();
+
   const [tratamiento, setTratamiento] =
     useState<Tratamiento | null>(null);
 
   const { turnos, borrarTurnos } = useTurnos();
 
-  const [usuariosPendientes, setUsuariosPendientes] =
-    useState<UsuarioPendiente[]>([]);
+  const {
+    usuariosPendientes,
+    aprobarUsuario,
+    rechazarUsuario,
+  } = useUsers();
 
   useEffect(() => {
-    const cargarPendientes = async () => {
-      const snapshot = await getDocs(
-        collection(db, 'pendingUsers')
-      );
+    if (!usuarioLogueado) return;
 
-      const data = snapshot.docs.map(doc => doc.data() as UsuarioPendiente);
-      setUsuariosPendientes(data);
-    };
-
-    cargarPendientes();
-  }, []);
-
-  const aprobarUsuario = async (user: UsuarioPendiente) => {
-    try {
-      await setDoc(doc(db, 'users', user.uid), {
-        personal: user.personal,
-        account: user.account,
-        profile: {
-          ...user.profile,
-          approved: true,
-        },
-      });
-
-      await deleteDoc(doc(db, 'pendingUsers', user.uid));
-
-      setUsuariosPendientes(prev =>
-        prev.filter(u => u.uid !== user.uid)
-      );
-
-      Alert.alert(
-        'Usuario aprobado',
-        `${user.personal.name} fue aprobado`
-      );
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo aprobar el usuario');
+    if (usuarioLogueado.role !== "admin") {
+      router.replace("/");
     }
+  }, [usuarioLogueado]);
+
+  if (!usuarioLogueado) {
+    return (
+      <View style={styles.loading}>
+        <Text style={styles.text}>Cargando...</Text>
+      </View>
+    );
+  }
+
+  if (usuarioLogueado.role !== "admin") {
+    return null;
+  }
+
+  const handleAprobar = (uid: string, nombre: string) => {
+    aprobarUsuario(uid);
+
+    Alert.alert(
+      "Usuario aprobado",
+      `${nombre} fue aprobado correctamente.`
+    );
   };
 
-  const rechazarUsuario = async (uid: string) => {
-    await deleteDoc(doc(db, 'pendingUsers', uid));
+  const handleRechazar = (uid: string) => {
+    rechazarUsuario(uid);
 
-    setUsuariosPendientes(prev =>
-      prev.filter(user => user.uid !== uid)
+    Alert.alert(
+      "Usuario rechazado",
+      "El usuario fue eliminado de la lista."
     );
-
-    Alert.alert('Usuario rechazado');
   };
 
   return (
@@ -126,14 +102,21 @@ export default function Administrador() {
               <View style={styles.smallButton}>
                 <AppButton
                   title="Aprobar"
-                  onPress={() => aprobarUsuario(user)}
+                  onPress={() =>
+                    handleAprobar(
+                      user.uid,
+                      user.personal.name
+                    )
+                  }
                 />
               </View>
 
               <View style={styles.smallButton}>
                 <AppButton
                   title="Rechazar"
-                  onPress={() => rechazarUsuario(user.uid)}
+                  onPress={() =>
+                    handleRechazar(user.uid)
+                  }
                 />
               </View>
             </View>
@@ -144,16 +127,42 @@ export default function Administrador() {
       <View style={styles.card}>
         <Text style={styles.title}>Crear turnos</Text>
 
-        <AppButton title="Uñas" onPress={() => setTratamiento('Uñas')} />
-        <AppButton title="Cejas" onPress={() => setTratamiento('Cejas')} />
+        <AppButton
+          title="Uñas"
+          onPress={() => setTratamiento("Uñas")}
+        />
+
+        <AppButton
+          title="Cejas"
+          onPress={() => setTratamiento("Cejas")}
+        />
+
         <AppButton
           title="Corporales"
-          onPress={() => setTratamiento('Corporales')}
+          onPress={() =>
+            setTratamiento("Corporales")
+          }
         />
 
         <AppButton
           title="Borrar todos los turnos"
-          onPress={borrarTurnos}
+          onPress={() => {
+            Alert.alert(
+              "Borrar turnos",
+              "¿Seguro que querés borrar todos?",
+              [
+                {
+                  text: "Cancelar",
+                  style: "cancel",
+                },
+                {
+                  text: "Borrar",
+                  style: "destructive",
+                  onPress: borrarTurnos,
+                },
+              ]
+            );
+          }}
         />
       </View>
 
@@ -166,18 +175,12 @@ export default function Administrador() {
 
         {turnos.length === 0 && (
           <Text style={styles.empty}>
-            No hay turnos creados
+            No hay turnos registrados
           </Text>
         )}
 
         {turnos.map(turno => (
-          <View
-            key={turno.id}
-            style={[
-              styles.turnoRow,
-              turno.reservado && styles.turnoReservado,
-            ]}
-          >
+          <View key={turno.id} style={styles.turnoRow}>
             <Text style={styles.text}>
               📅 {turno.dia} ⏰ {turno.hora}
             </Text>
@@ -186,15 +189,11 @@ export default function Administrador() {
               💄 {turno.tratamiento}
             </Text>
 
-            {turno.reservado ? (
-              <Text style={styles.reservadoText}>
-                🔒 Reservado por {turno.reservadoPor}
-              </Text>
-            ) : (
-              <Text style={styles.disponibleText}>
-                🟢 Disponible
-              </Text>
-            )}
+            <Text style={styles.text}>
+              {turno.reservado
+                ? `🔒 Reservado por ${turno.reservadoPor}`
+                : "🟢 Disponible"}
+            </Text>
           </View>
         ))}
       </View>
@@ -206,64 +205,57 @@ const styles = StyleSheet.create({
   container: {
     padding: 24,
     gap: 20,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
   },
   card: {
     padding: 20,
     borderRadius: 16,
-    backgroundColor: '#111827',
+    backgroundColor: "#111827",
     gap: 12,
     borderWidth: 1,
-    borderColor: '#1F2937',
+    borderColor: "#1F2937",
   },
   title: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#F9FAFB',
+    fontWeight: "700",
+    color: "#F9FAFB",
   },
   empty: {
-    color: '#9CA3AF',
-    fontStyle: 'italic',
+    color: "#9CA3AF",
+    fontStyle: "italic",
   },
   usuarioCard: {
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#020617',
+    backgroundColor: "#020617",
     gap: 6,
     borderWidth: 1,
-    borderColor: '#1F2937',
+    borderColor: "#1F2937",
   },
   actionsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginTop: 8,
   },
   smallButton: {
-    width: '40%',
+    width: "45%",
   },
   turnoRow: {
     padding: 12,
     borderRadius: 12,
-    backgroundColor: '#020617',
+    backgroundColor: "#020617",
     gap: 4,
-  },
-  turnoReservado: {
-    backgroundColor: '#1F2937',
-    opacity: 0.7,
+    marginBottom: 8,
   },
   text: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#E5E7EB',
-  },
-  reservadoText: {
-    marginTop: 4,
-    color: '#9CA3AF',
-    fontWeight: '600',
-  },
-  disponibleText: {
-    marginTop: 4,
-    color: '#10B981',
-    fontWeight: '600',
+    fontWeight: "500",
+    color: "#E5E7EB",
   },
 });

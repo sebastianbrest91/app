@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
-import { ThemedText } from '../../components/themed-text';
-import { ThemedView } from '../../components/themed-view';
+import { ThemedText } from '../components/themed-text';
+import { ThemedView } from '../components/themed-view';
 
 export default function Home() {
   return (
@@ -17,14 +17,14 @@ export default function Home() {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push('/usuario')}
+        onPress={() => router.push('/usuario-login')}
       >
-        <ThemedText style={styles.buttonText}>Ingresar como usuario</ThemedText>
+        <ThemedText style={styles.buttonText}>Usuario</ThemedText>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push('/administrador')}
+        onPress={() => router.push('/administrador-login')}
       >
         <ThemedText style={styles.buttonText}>Administrador</ThemedText>
       </TouchableOpacity>

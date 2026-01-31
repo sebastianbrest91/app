@@ -1,4 +1,17 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  deleteAllTurnos,
+  fetchTurnos,
+  initDB,
+  insertTurno,
+  updateTurnoReserva,
+} from '../db/turnosDb';
 
 export type Tratamiento = 'Uñas' | 'Cejas' | 'Corporales';
 
@@ -14,33 +27,73 @@ export type Turno = {
 type TurnosContextType = {
   turnos: Turno[];
   agregarTurno: (turno: Omit<Turno, 'reservado'>) => void;
-  seleccionarTurno: (turno: Turno) => void;
   borrarTurnos: () => void;
   reservarTurno: (id: string, usuario: string) => void;
 };
 
 const TurnosContext = createContext<TurnosContextType | null>(null);
 
-export function TurnosProvider({ children }: { children: React.ReactNode }) {
+export function TurnosProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [turnos, setTurnos] = useState<Turno[]>([]);
 
-  const agregarTurno = (turno: Omit<Turno, 'reservado'>) => {
-    setTurnos(prev => [...prev, { ...turno, reservado: false }]);
-  };
+  useEffect(() => {
+    try {
+      initDB();
+      const data = fetchTurnos();
 
-  const seleccionarTurno = (turno: Turno) => {
-    console.log('📩 Turno seleccionado:', turno);
+      const mapeados: Turno[] = data.map(t => ({
+        id: t.id,
+        dia: t.dia,
+        hora: t.hora,
+        tratamiento: t.tratamiento as Tratamiento,
+        reservado: t.reservado === 1,
+        reservadoPor: t.reservadoPor ?? undefined,
+      }));
+
+      setTurnos(mapeados);
+    } catch (error) {
+      console.log('Error cargando turnos:', error);
+    }
+  }, []);
+
+  const agregarTurno = (turno: Omit<Turno, 'reservado'>) => {
+    const nuevo: Turno = {
+      ...turno,
+      reservado: false,
+    };
+
+    insertTurno({
+      id: nuevo.id,
+      dia: nuevo.dia,
+      hora: nuevo.hora,
+      tratamiento: nuevo.tratamiento,
+      reservado: 0,
+      reservadoPor: null,
+    });
+
+    setTurnos(prev => [...prev, nuevo]);
   };
 
   const borrarTurnos = () => {
+    deleteAllTurnos();
     setTurnos([]);
   };
 
   const reservarTurno = (id: string, usuario: string) => {
+    updateTurnoReserva(id, usuario);
+
     setTurnos(prev =>
       prev.map(turno =>
         turno.id === id
-          ? { ...turno, reservado: true, reservadoPor: usuario }
+          ? {
+              ...turno,
+              reservado: true,
+              reservadoPor: usuario,
+            }
           : turno
       )
     );
@@ -48,7 +101,12 @@ export function TurnosProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <TurnosContext.Provider
-      value={{ turnos, agregarTurno, seleccionarTurno, borrarTurnos, reservarTurno }}
+      value={{
+        turnos,
+        agregarTurno,
+        borrarTurnos,
+        reservarTurno,
+      }}
     >
       {children}
     </TurnosContext.Provider>
@@ -57,6 +115,12 @@ export function TurnosProvider({ children }: { children: React.ReactNode }) {
 
 export function useTurnos() {
   const ctx = useContext(TurnosContext);
-  if (!ctx) throw new Error('useTurnos debe usarse dentro del Provider');
+
+  if (!ctx) {
+    throw new Error(
+      'useTurnos debe usarse dentro del TurnosProvider'
+    );
+  }
+
   return ctx;
 }

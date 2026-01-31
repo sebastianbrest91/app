@@ -1,44 +1,38 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs } from "expo-router";
+import { useUsers } from "../../src/context/usersContext";
 
 export default function TabsLayout() {
+  const { usuarioLogueado } = useUsers();
+
+  if (!usuarioLogueado) return null;
+
+  const esAdmin = usuarioLogueado.role === "admin";
+
   return (
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-            tabBarActiveTintColor: '#FC88AD',
-            tabBarInactiveTintColor: '#9CA3AF',
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: "#000",
+        },
+        tabBarActiveTintColor: "white",
+      }}
+    >
+      {esAdmin ? (
+        <Tabs.Screen
+          name="administrador"
+          options={{
+            title: "Admin",
           }}
-        >
-          <Tabs.Screen
-            name="index"
-            options={{
-              title: 'Inicio',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="home" size={size} color={color} />
-              ),
-            }}
-          />
-
-          <Tabs.Screen
-            name="turnos"
-            options={{
-              title: 'Turnos',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="calendar" size={size} color={color} />
-              ),
-            }}
-          />
-
-          <Tabs.Screen
-            name="administrador"
-            options={{
-              title: 'Administrador',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="settings" size={size} color={color} />
-              ),
-            }}
-          />
-        </Tabs>
+        />
+      ) : (
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Usuario",
+          }}
+        />
+      )}
+    </Tabs>
   );
 }

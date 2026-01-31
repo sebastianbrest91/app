@@ -1,98 +1,116 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-} from 'firebase/firestore';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import { db } from '../firebaseConfig';
+import React, { createContext, useContext, useState } from "react";
+import { mockUsers } from "../mocks/mockUsers";
 
-type Usuario = {
+export type Rol = "user" | "admin";
+
+type UsuarioLogueado = {
+  email: string;
+  role: Rol;
+};
+
+export type UsuarioPendiente = {
   uid: string;
+  account: {
+    email: string;
+    username: string;
+  };
   personal: {
     name: string;
     lastName: string;
     dni: string;
     birthDate: string;
-  };
-  account: {
-    username: string;
-    email: string;
+    photoURL: string;
   };
   profile: {
-    objective?: string;
-    role: 'user' | 'admin';
+    role: Rol;
     approved: boolean;
+    objetive: string;
   };
 };
+
+export type RegistrarInput = Omit<UsuarioPendiente, "uid">;
 
 type UsersContextType = {
-  usuariosPendientes: Usuario[];
-  registrarUsuario: (u: Usuario) => Promise<void>;
-  aprobarUsuario: (u: Usuario) => Promise<void>;
+  usuarioLogueado: UsuarioLogueado | null;
+
+  usuariosPendientes: UsuarioPendiente[];
+
+  login: (email: string, password: string) => Rol | null;
+  logout: () => void;
+
+  registrarUsuario: (data: RegistrarInput) => void;
+  aprobarUsuario: (uid: string) => void;
+  rechazarUsuario: (uid: string) => void;
 };
 
-const UsersContext = createContext<UsersContextType>(
-  {} as UsersContextType
-);
+const UsersContext = createContext({} as UsersContextType);
 
-export function UsersProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [usuariosPendientes, setUsuariosPendientes] =
-    useState<Usuario[]>([]);
+export function UsersProvider({ children }: { children: React.ReactNode }) {
+  const [usuarioLogueado, setUsuarioLogueado] =
+    useState<UsuarioLogueado | null>(null);
 
-  useEffect(() => {
-    cargarPendientes();
-  }, []);
+  const [usuariosPendientes, setUsuariosPendientes] = useState<
+    UsuarioPendiente[]
+  >([]);
 
-  const cargarPendientes = async () => {
-    const snapshot = await getDocs(
-      collection(db, 'pendingUsers')
+  const login = (email: string, password: string) => {
+    const encontrado = mockUsers.find(
+      u => u.email === email && u.password === password
     );
 
-    const data = snapshot.docs.map(doc => doc.data() as Usuario);
-    setUsuariosPendientes(data);
-  };
+    if (!encontrado) return null;
 
-  const registrarUsuario = async (usuario: Usuario) => {
-    await setDoc(
-      doc(db, 'pendingUsers', usuario.uid),
-      usuario
-    );
-  };
-
-  const aprobarUsuario = async (usuario: Usuario) => {
-    await setDoc(doc(db, 'users', usuario.uid), {
-      personal: usuario.personal,
-      account: usuario.account,
-      profile: {
-        objective:
-          usuario.profile.objective ??
-          'Mejorar condición física',
-        role: 'user',
-        approved: true,
-      },
+    setUsuarioLogueado({
+      email: encontrado.email,
+      role: encontrado.role,
     });
 
+    return encontrado.role;
+  };
+
+  const logout = () => {
+    setUsuarioLogueado(null);
+  };
+
+  const registrarUsuario = (data: RegistrarInput) => {
+    const nuevo: UsuarioPendiente = {
+      uid: Date.now().toString(),
+      ...data,
+    };
+
+    setUsuariosPendientes(prev => [...prev, nuevo]);
+  };
+
+  const aprobarUsuario = (uid: string) => {
     setUsuariosPendientes(prev =>
-      prev.filter(u => u.uid !== usuario.uid)
+      prev.map(u =>
+        u.uid === uid
+          ? {
+              ...u,
+              profile: {
+                ...u.profile,
+                approved: true,
+              },
+            }
+          : u
+      )
     );
+  };
+
+  const rechazarUsuario = (uid: string) => {
+    setUsuariosPendientes(prev => prev.filter(u => u.uid !== uid));
   };
 
   return (
     <UsersContext.Provider
       value={{
+        usuarioLogueado,
         usuariosPendientes,
+        login,
+        logout,
         registrarUsuario,
         aprobarUsuario,
+        rechazarUsuario,
       }}
     >
       {children}
@@ -101,3 +119,4 @@ export function UsersProvider({
 }
 
 export const useUsers = () => useContext(UsersContext);
+
