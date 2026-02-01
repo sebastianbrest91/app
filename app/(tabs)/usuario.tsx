@@ -13,8 +13,8 @@ import { useRouter } from "expo-router";
 import { AppButton } from "../../components/AppButton";
 import { ThemedText } from "../../components/themed-text";
 
-import { useTurnos } from "../../src/context/contexturnos";
 import { useUsers } from "../../src/context/usersContext";
+import { useTurnos } from "../../src/hooks/useTurnos";
 
 export default function Usuario() {
   const router = useRouter();
@@ -101,7 +101,7 @@ export default function Usuario() {
           <ThemedText>No hay turnos disponibles</ThemedText>
         )}
 
-        {turnos.map(turno => (
+        {turnos.map((turno: any)=> (
           <View
             key={turno.id}
             style={[

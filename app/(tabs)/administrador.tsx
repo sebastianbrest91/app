@@ -12,10 +12,9 @@ import { useRouter } from "expo-router";
 import { AppButton } from "../../components/AppButton";
 import { CrearTurnosForm } from "../../components/CrearTurnosForm";
 
-import {
-  useTurnos,
-  type Tratamiento,
-} from "../../src/context/contexturnos";
+import { useTurnos } from "../../src/hooks/useTurnos";
+import type { Tratamiento } from "../../src/types/turnos";
+
 
 import { useUsers } from "../../src/context/usersContext";
 

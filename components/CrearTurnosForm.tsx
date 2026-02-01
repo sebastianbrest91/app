@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { useTurnos, type Tratamiento } from '../src/context/contexturnos';
+import { useTurnos } from '../src/hooks/useTurnos';
+import type { Tratamiento } from '../src/types/turnos';
+
 import { AppButton } from './AppButton';
 
 type Props = {
@@ -15,12 +17,12 @@ export function CrearTurnosForm({ tratamiento }: Props) {
   const crearTurno = () => {
     if (!dia || !hora) return;
 
-    agregarTurno({
-      id: Date.now().toString(),
-      dia,
-      hora,
-      tratamiento,
-    });
+  agregarTurno({
+  id: Date.now().toString(),
+  dia,
+  hora,
+  tratamiento,
+});
 
     setDia('');
     setHora('');

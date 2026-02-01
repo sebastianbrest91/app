@@ -1,13 +1,21 @@
 import { Stack } from 'expo-router';
-import { TurnosProvider } from '../src/context/contexturnos';
+import { useEffect } from 'react';
+import { Provider } from 'react-redux';
+
 import { UsersProvider } from '../src/context/usersContext';
+import { initDB } from '../src/db/turnosDb';
+import { store } from '../src/store/store';
 
 export default function RootLayout() {
+  useEffect(() => {
+    initDB();
+  }, []);
+
   return (
-    <UsersProvider>
-      <TurnosProvider>
+    <Provider store={store}>
+      <UsersProvider>
         <Stack screenOptions={{ headerShown: false }} />
-      </TurnosProvider>
-    </UsersProvider>
+      </UsersProvider>
+    </Provider>
   );
 }
