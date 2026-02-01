@@ -1,50 +1,71 @@
-# Welcome to your Expo app 👋
+React Native (Proyecto Final)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil desarrollada con React Native + Expo que implementa persistencia de datos, sincronización offline y conexión con Firebase, cumpliendo con las consignas del proyecto final.
 
-## Get started
+La temática base es un sistema de gestión de turnos, aplicando los mismos conceptos que un ecommerce (listado, reserva/compra, estado, sincronización).
 
-1. Install dependencies
 
-   ```bash
-   npm install
-   ```
+Consignas cumplidas
 
-2. Start the app
+- Aplicación móvil con persistencia de datos
+- Sincronización offline
+- Manejo de estado con Redux Toolkit
+- Navegación entre pantallas
+- Uso de SQLite
+- Documentación del proyecto
 
-   ```bash
-   npx expo start
-   ```
 
-In the output, you'll find options to open the app in a
+Arquitectura del proyecto
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+La aplicación utiliza una arquitectura, donde los datos se gestionan localmente y luego se sincronizan.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Los datos se almacenan localmente utilizando SQLite.
 
-## Get a fresh project
+Cada registro posee un estado de sincronización:
 
-When you're ready, run:
+- `pending`: pendiente de sincronizar
+- `synced`: sincronizado con Firebase
 
-```bash
-npm run reset-project
-```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+1. El usuario crea o reserva un turno
+2. Se guarda localmente en SQLite
+3. Redux carga el estado desde SQLite
+4. Cuando hay conexión, RTK Query sincroniza con Firebase
 
-## Learn more
+Tabla `turnos`:
 
-To learn more about developing your project with Expo, look at the following resources:
+- id
+- dia
+- hora
+- tratamiento
+- reservado
+- reservadoPor
+- syncStatus
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+La base se inicializa al iniciar la aplicación.
 
-## Join the community
+El manejo de estado global se realiza con Redux Toolkit, utilizando:
 
-Join our community of developers creating universal apps.
+- store
+- slices
+- RTK Query para sincronización
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Esto permite una separación clara entre:
+- lógica de negocio
+- persistencia
+- UI
+
+Componentes reutilizables
+
+- Tarjetas de turnos
+- Botones personalizados
+- Formularios reutilizables
+
+
+Este proyecto fue desarrollado con fines educativos, aplicando los conceptos vistos en clase:
+- arquitectura
+- manejo de estado
+- persistencia
+- sincronización offline
+- documentación
+- alguna ayuda de chat gpt como en este resumen, gracias por su tiempo.
